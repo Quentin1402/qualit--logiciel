@@ -10,3 +10,4 @@ class CodeAnalyzerTest extends TestCase {
         $this->assertNotEmpty($comments);
     }
 }
+ 
