@@ -1,0 +1,17 @@
+{
+    "name": "jobin-quizz/code-review",
+    "description": "Application d'analyse de code avec IA pour les revues de code automatiques.",
+    "require": {
+        "guzzlehttp/guzzle": "^7.0",
+        "vlucas/phpdotenv": "^5.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "GitHub\\": "src/GitHub/",
+            "OpenAI\\": "src/OpenAI/"
+        }
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^9.0"
+    }
+}
