@@ -3,7 +3,7 @@
         'name' => 'jobin-quizz/code-review',
         'pretty_version' => 'dev-main',
         'version' => 'dev-main',
-        'reference' => '098f642c2928a4c1ffb0af24458e0a219082b070',
+        'reference' => '8b4a450a9380e08853eb8a35056949a1b55dbdb8',
         'type' => 'library',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -58,7 +58,7 @@
         'jobin-quizz/code-review' => array(
             'pretty_version' => 'dev-main',
             'version' => 'dev-main',
-            'reference' => '098f642c2928a4c1ffb0af24458e0a219082b070',
+            'reference' => '8b4a450a9380e08853eb8a35056949a1b55dbdb8',
             'type' => 'library',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),

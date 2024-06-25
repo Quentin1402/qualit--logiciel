@@ -3,7 +3,8 @@
     "description": "Application d'analyse de code avec IA pour les revues de code automatiques.",
     "require": {
         "guzzlehttp/guzzle": "^7.0",
-        "vlucas/phpdotenv": "^5.0"
+        "vlucas/phpdotenv": "^5.0",
+        "symfony/deprecation-contracts": "^2.2 || ^3.0"
     },
     "autoload": {
         "psr-4": {
