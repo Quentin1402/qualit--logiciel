@@ -1,25 +1,30 @@
-name: Code Review with GPT-3
+name: Code Review with Claude
 
-on: [push]
+on:
+  push:
+    branches:
+      - main
 
 jobs:
   code_review:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
 
-    - name: Set up PHP
-      uses: shivammathur/setup-php@v2
-      with:
-        php-version: '8.1'
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '14'
 
-    - name: Install dependencies
-      run: composer install --no-dev
+      - name: Install dependencies
+        run: npm install
 
-    - name: Run code review script
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        OPENAI_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-      run: php src/main.php
+      - name: Run code review script
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: node src/main.js
