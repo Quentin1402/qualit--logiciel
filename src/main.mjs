@@ -1,13 +1,13 @@
 import { Octokit } from "@octokit/rest";
 import axios from 'axios';
 import { config } from 'dotenv-esm';
+
 config();
 
 const octokit = new Octokit({ auth: process.env.GITHUB_TOKEN });
 
 async function getLastCommitDiff() {
-  const owner = process.env.GITHUB_REPOSITORY.split('/')[0];
-  const repo = process.env.GITHUB_REPOSITORY.split('/')[1];
+  const [owner, repo] = process.env.GITHUB_REPOSITORY.split('/');
   const branch = process.env.GITHUB_REF.split('/').pop();
 
   const { data: commits } = await octokit.repos.listCommits({
@@ -47,12 +47,12 @@ async function analyzeCodeWithClaude(diffs) {
     }
   });
 
-  return response.data.content[0].text;
+  // Assuming the API returns the result in the field `completion`
+  return response.data.completion;
 }
 
 async function postReviewComments(comments) {
-  const owner = process.env.GITHUB_REPOSITORY.split('/')[0];
-  const repo = process.env.GITHUB_REPOSITORY.split('/')[1];
+  const [owner, repo] = process.env.GITHUB_REPOSITORY.split('/');
   const sha = process.env.GITHUB_SHA;
 
   await octokit.repos.createCommitComment({

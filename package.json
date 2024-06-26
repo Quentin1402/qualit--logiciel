@@ -2,12 +2,13 @@
   "name": "qualit--logiciel",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "src/main.mjs",
   "type": "module",
   "directories": {
     "test": "tests"
   },
   "scripts": {
+    "start": "node src/main.mjs",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
