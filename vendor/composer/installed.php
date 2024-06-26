@@ -3,7 +3,7 @@
         'name' => 'quality/code-review',
         'pretty_version' => 'dev-main',
         'version' => 'dev-main',
-        'reference' => 'b79bf9f1e3fc759ec120f361849a56d22c2f18be',
+        'reference' => '7b1d56e420100f6fc4573e4958e603a5521090ac',
         'type' => 'library',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -202,7 +202,7 @@
         'quality/code-review' => array(
             'pretty_version' => 'dev-main',
             'version' => 'dev-main',
-            'reference' => 'b79bf9f1e3fc759ec120f361849a56d22c2f18be',
+            'reference' => '7b1d56e420100f6fc4573e4958e603a5521090ac',
             'type' => 'library',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),
