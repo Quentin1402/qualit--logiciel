@@ -22,6 +22,17 @@ console.log(`ANTHROPIC_API_KEY: ${anthropicApiKey ? 'set' : 'not set'}`);
 
 const octokit = new Octokit({ auth: githubToken });
 
+async function checkAuthentication() {
+  try {
+    const { data: user } = await octokit.users.getAuthenticated();
+    console.log("Authenticated as:", user.login);
+  } catch (error) {
+    console.error("Authentication error:", error.message);
+  }
+}
+
+checkAuthentication();
+
 async function getLastCommitDiff() {
   const [owner, repo] = process.env.GITHUB_REPOSITORY.split('/');
   const branch = process.env.GITHUB_REF.split('/').pop();
