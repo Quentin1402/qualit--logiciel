@@ -10,6 +10,8 @@ async function getLastCommitDiff() {
   const [owner, repo] = process.env.GITHUB_REPOSITORY.split('/');
   const branch = process.env.GITHUB_REF.split('/').pop();
 
+  console.log(`Owner: ${owner}, Repo: ${repo}, Branch: ${branch}`);
+
   const { data: commits } = await octokit.repos.listCommits({
     owner,
     repo,
@@ -17,7 +19,13 @@ async function getLastCommitDiff() {
     per_page: 1
   });
 
+  if (!commits || commits.length === 0) {
+    throw new Error("No commits found.");
+  }
+
   const lastCommit = commits[0];
+  console.log(`Last Commit SHA: ${lastCommit.sha}`);
+
   const { data: diff } = await octokit.repos.getCommit({
     owner,
     repo,
@@ -30,30 +38,38 @@ async function getLastCommitDiff() {
 }
 
 async function analyzeCodeWithClaude(diffs) {
-  const response = await axios.post('https://api.anthropic.com/v1/messages', {
-    model: "claude-3-haiku-20240307",
-    max_tokens: 1024,
-    messages: [
-      {
-        role: "user",
-        content: `Analyze the following code diffs and provide code review comments: ${diffs}`
+  try {
+    const response = await axios.post('https://api.anthropic.com/v1/messages', {
+      model: "claude-3-haiku-20240307",
+      max_tokens: 1024,
+      messages: [
+        {
+          role: "user",
+          content: `Analyze the following code diffs and provide code review comments: ${diffs}`
+        }
+      ]
+    }, {
+      headers: {
+        'x-api-key': process.env.ANTHROPIC_API_KEY,
+        'anthropic-version': '2023-06-01',
+        'Content-Type': 'application/json',
       }
-    ]
-  }, {
-    headers: {
-      'x-api-key': process.env.ANTHROPIC_API_KEY,
-      'anthropic-version': '2023-06-01',
-      'Content-Type': 'application/json',
-    }
-  });
+    });
 
-  // Assuming the API returns the result in the field `completion`
-  return response.data.completion;
+    console.log(`Anthropic API Response: ${JSON.stringify(response.data)}`);
+
+    return response.data.completion;
+  } catch (error) {
+    console.error('Error during analysis with Claude:', error.response ? error.response.data : error.message);
+    throw error;
+  }
 }
 
 async function postReviewComments(comments) {
   const [owner, repo] = process.env.GITHUB_REPOSITORY.split('/');
   const sha = process.env.GITHUB_SHA;
+
+  console.log(`Posting comments to ${owner}/${repo} on commit ${sha}`);
 
   await octokit.repos.createCommitComment({
     owner,
@@ -66,7 +82,9 @@ async function postReviewComments(comments) {
 async function main() {
   try {
     const diffs = await getLastCommitDiff();
+    console.log(`Diffs: ${diffs}`);
     const analysis = await analyzeCodeWithClaude(diffs);
+    console.log(`Analysis: ${analysis}`);
     await postReviewComments(analysis);
     console.log("Code review completed successfully");
   } catch (error) {
