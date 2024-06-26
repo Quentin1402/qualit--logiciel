@@ -1,5 +1,7 @@
-const { Octokit } = require("@octokit/rest");
-const axios = require('axios');
+import { Octokit } from "@octokit/rest";
+import axios from 'axios';
+import { config } from 'dotenv-esm';
+config();
 
 const octokit = new Octokit({ auth: process.env.GITHUB_TOKEN });
 

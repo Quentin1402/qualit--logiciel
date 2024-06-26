@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
+  "type": "module",
   "directories": {
     "test": "tests"
   },
@@ -15,6 +16,7 @@
   "dependencies": {
     "@octokit/rest": "^21.0.0",
     "axios": "^1.7.2",
+    "dotenv-esm": "^16.0.3-4",
     "express": "^4.19.2",
     "simple-git": "^3.25.0"
   }
