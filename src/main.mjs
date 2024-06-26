@@ -4,7 +4,7 @@ import { config } from 'dotenv-esm';
 
 config();
 
-const githubToken = process.env.GITHUB_TOKEN;
+const githubToken = process.env.MY_GITHUB_TOKEN;
 const anthropicApiKey = process.env.ANTHROPIC_API_KEY;
 
 if (!githubToken) {
