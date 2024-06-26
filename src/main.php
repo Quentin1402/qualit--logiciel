@@ -1,28 +1,28 @@
 <?php
+
 require 'vendor/autoload.php';
 
-use GitHub\CommitFetcher;
-use GitHub\PullRequestCommenter;
-use OpenAI\CodeAnalyzer;
+// Récupérez le hash du commit à partir des arguments passés
+if ($argc < 2) {
+    echo "Usage: php script.php <commit_hash>\n";
+    exit(1);
+}
 
-$dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
-$dotenv->load();
+$commitHash = $argv[1];
 
-$githubToken = getenv('GITHUB_TOKEN');
-$openaiApiKey = getenv('OPENAI_API_KEY');
+$gitService = new GitService();
+$anthropicService = new AnthropicService();
+$codeReviewService = new CodeReviewService();
 
-$repoOwner = 'utilisateur';
-$repoName = 'repository';
-$commitSha = 'sha_du_commit';
-$prNumber = 1;  // Numéro de la pull request
-$path = 'chemin/vers/le/fichier';
-$position = 1;  // Position dans le diff
+// Exemple de récupération des diffs d'un commit
+$repo = 'Quentin1402/qualit--logiciel';
+$diff = $gitService->getCommitDiffs($repo, $commitHash);
 
-$commitFetcher = new CommitFetcher($githubToken);
-$diff = $commitFetcher->getDiff($repoOwner, $repoName, $commitSha);
+// Exemple d'analyse du code avec Anthropomorphic-UI
+$analysisResult = $anthropicService->analyzeCode($diff);
 
-$codeAnalyzer = new CodeAnalyzer($openaiApiKey);
-$diffComments = $codeAnalyzer->analyzeCodeDiff($diff);
+// Exemple de génération de commentaires de revue de code
+$comments = $codeReviewService->generateCodeReviewComments($analysisResult);
 
-$pullRequestCommenter = new PullRequestCommenter($githubToken);
-$pullRequestCommenter->createReviewComment($repoOwner, $repoName, $prNumber, $diffComments, $commitSha, $path, $position);
+// Exemple de publication des commentaires sur GitHub
+$codeReviewService->postCommentsToGitHub($comments, $repo, $commitHash);
