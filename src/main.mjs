@@ -28,15 +28,21 @@ async function getLastCommitDiff() {
 
   console.log(`Fetching commits for ${owner}/${repo} branch ${branch}`);
 
-  const { data: commits } = await octokit.repos.listCommits({
-    owner,
-    repo,
-    sha: branch,
-    per_page: 1
-  });
+  try {
+    const { data: commits } = await octokit.repos.listCommits({
+      owner,
+      repo,
+      sha: branch,
+      per_page: 1
+    });
 
-  if (!commits || commits.length === 0) {
-    throw new Error('No commits found');
+    // Vérifier si des commits ont été retournés
+    if (!commits || commits.length === 0) {
+      throw new Error('No commits found');
+    }
+  } catch (error) {
+    console.error('Error fetching commits:', error);
+    throw error; // Remonter l'erreur pour une gestion ultérieure
   }
 
   const lastCommit = commits[0];
@@ -52,7 +58,7 @@ async function getLastCommitDiff() {
     throw new Error('No diff data found');
   }
 
-  return diff.files.map(file => 
+  return diff.files.map(file =>
     `File: ${file.filename}\nChanges: ${file.changes}\nAdditions: ${file.additions}\nDeletions: ${file.deletions}\nPatch:\n${file.patch}`
   ).join('\n\n');
 }
