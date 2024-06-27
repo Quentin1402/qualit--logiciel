@@ -1,4 +1,3 @@
-import { Octokit } from "@octokit/rest";
 import axios from 'axios';
 import { config } from 'dotenv-esm';
 
@@ -6,8 +5,8 @@ config();
 
 const githubToken = process.env.GITHUB_TOKEN;
 const anthropicApiKey = process.env.ANTHROPIC_API_KEY;
-const [owner, repo] = process.env.GITHUB_REPOSITORY.split('/');
-const branch = process.env.GITHUB_REF.split('/').pop();
+const [owner, repo] = process.env.GITHUB_REPOSITORY ? process.env.GITHUB_REPOSITORY.split('/') : [];
+const branch = process.env.GITHUB_REF ? process.env.GITHUB_REF.split('/').pop() : '';
 const sha = process.env.GITHUB_SHA;
 
 if (!githubToken) {
@@ -20,15 +19,36 @@ if (!anthropicApiKey) {
   process.exit(1);
 }
 
+if (!owner || !repo) {
+  console.error('GITHUB_REPOSITORY is not set or invalid');
+  process.exit(1);
+}
+
+if (!branch) {
+  console.error('GITHUB_REF is not set or invalid');
+  process.exit(1);
+}
+
+if (!sha) {
+  console.error('GITHUB_SHA is not set or invalid');
+  process.exit(1);
+}
+
 console.log(`GITHUB_TOKEN: ${githubToken ? 'set' : 'not set'}`);
 console.log(`ANTHROPIC_API_KEY: ${anthropicApiKey ? 'set' : 'not set'}`);
 
-const octokit = new Octokit({ auth: githubToken });
+const githubApi = axios.create({
+  baseURL: 'https://api.github.com',
+  headers: {
+    'Authorization': `Bearer ${githubToken}`,
+    'Accept': 'application/vnd.github.v3+json'
+  }
+});
 
 async function checkAuthentication() {
   try {
-    const { data: user } = await octokit.users.getAuthenticated();
-    console.log("Authenticated as:", user.login);
+    const response = await githubApi.get('/user');
+    console.log("Authenticated as:", response.data.login);
   } catch (error) {
     console.error("Authentication error:", error.message);
   }
@@ -36,37 +56,33 @@ async function checkAuthentication() {
 
 checkAuthentication();
 
-/*
-
 async function getLastCommitDiff() {
   console.log(`Fetching commits for ${owner}/${repo} branch ${branch}`);
 
   try {
-    const { data: commits } = await octokit.repos.listCommits({
-      owner,
-      repo,
-      sha: branch,
-      per_page: 1
+    const response = await githubApi.get(`/repos/${owner}/${repo}/commits`, {
+      params: {
+        sha: branch,
+        per_page: 1
+      }
     });
 
-    if (!commits || commits.length === 0) {
+    console.log('Commits response:', response.data);
+
+    if (!response.data || response.data.length === 0) {
       throw new Error('No commits found');
     }
 
-    const lastCommit = commits[0];
+    const lastCommit = response.data[0];
     console.log(`Fetching diff for commit ${lastCommit.sha}`);
 
-    const { data: diff } = await octokit.repos.getCommit({
-      owner,
-      repo,
-      ref: lastCommit.sha
-    });
+    const diffResponse = await githubApi.get(`/repos/${owner}/${repo}/commits/${lastCommit.sha}`);
 
-    if (!diff || !diff.files) {
+    if (!diffResponse.data || !diffResponse.data.files) {
       throw new Error('No diff data found');
     }
 
-    return diff.files.map(file =>
+    return diffResponse.data.files.map(file =>
       `File: ${file.filename}\nChanges: ${file.changes}\nAdditions: ${file.additions}\nDeletions: ${file.deletions}\nPatch:\n${file.patch}`
     ).join('\n\n');
   } catch (error) {
@@ -113,10 +129,7 @@ async function postReviewComments(comments) {
   console.log(`Posting review comments to ${owner}/${repo} commit ${sha}`);
 
   try {
-    await octokit.repos.createCommitComment({
-      owner,
-      repo,
-      commit_sha: sha,
+    await githubApi.post(`/repos/${owner}/${repo}/commits/${sha}/comments`, {
       body: comments
     });
 
@@ -139,4 +152,4 @@ async function main() {
   }
 }
 
-main();*/
+main();
