@@ -23,6 +23,13 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      - name: Debug Authentication
+        env:
+          GITHUB_TOKEN: ${{ secrets.MY_GITHUB_TOKEN }}
+        run: |
+          echo "Testing GitHub Authentication"
+          curl -H "Authorization: Bearer $GITHUB_TOKEN" -H "Accept: application/vnd.github.v3+json" https://api.github.com/user
+
       - name: Run code review script
         env:
           GITHUB_TOKEN: ${{ secrets.MY_GITHUB_TOKEN }}
