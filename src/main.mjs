@@ -6,6 +6,9 @@ config();
 
 const githubToken = process.env.GITHUB_TOKEN;
 const anthropicApiKey = process.env.ANTHROPIC_API_KEY;
+const [owner, repo] = process.env.GITHUB_REPOSITORY.split('/');
+const branch = process.env.GITHUB_REF.split('/').pop();
+const sha = process.env.GITHUB_SHA;
 
 if (!githubToken) {
   console.error('GITHUB_TOKEN is not set');
@@ -34,9 +37,6 @@ async function checkAuthentication() {
 checkAuthentication();
 
 async function getLastCommitDiff() {
-  const [owner, repo] = process.env.GITHUB_REPOSITORY.split('/');
-  const branch = process.env.GITHUB_REF.split('/').pop();
-
   console.log(`Fetching commits for ${owner}/${repo} branch ${branch}`);
 
   try {
@@ -47,76 +47,82 @@ async function getLastCommitDiff() {
       per_page: 1
     });
 
-    // Vérifier si des commits ont été retournés
     if (!commits || commits.length === 0) {
       throw new Error('No commits found');
     }
+
+    const lastCommit = commits[0];
+    console.log(`Fetching diff for commit ${lastCommit.sha}`);
+
+    const { data: diff } = await octokit.repos.getCommit({
+      owner,
+      repo,
+      ref: lastCommit.sha
+    });
+
+    if (!diff || !diff.files) {
+      throw new Error('No diff data found');
+    }
+
+    return diff.files.map(file =>
+      `File: ${file.filename}\nChanges: ${file.changes}\nAdditions: ${file.additions}\nDeletions: ${file.deletions}\nPatch:\n${file.patch}`
+    ).join('\n\n');
   } catch (error) {
     console.error('Error fetching commits:', error);
-    throw error; // Remonter l'erreur pour une gestion ultérieure
+    throw error;
   }
-
-  const lastCommit = commits[0];
-  console.log(`Fetching diff for commit ${lastCommit.sha}`);
-
-  const { data: diff } = await octokit.repos.getCommit({
-    owner,
-    repo,
-    ref: lastCommit.sha
-  });
-
-  if (!diff || !diff.files) {
-    throw new Error('No diff data found');
-  }
-
-  return diff.files.map(file =>
-    `File: ${file.filename}\nChanges: ${file.changes}\nAdditions: ${file.additions}\nDeletions: ${file.deletions}\nPatch:\n${file.patch}`
-  ).join('\n\n');
 }
 
 async function analyzeCodeWithClaude(diffs) {
   console.log(`Analyzing code with Claude for diffs:\n${diffs}`);
 
-  const response = await axios.post('https://api.anthropic.com/v1/messages', {
-    model: "claude-3-haiku-20240307",
-    max_tokens: 1024,
-    messages: [
-      {
-        role: "user",
-        content: `Analyze the following code diffs and provide code review comments: ${diffs}`
+  try {
+    const response = await axios.post('https://api.anthropic.com/v1/messages', {
+      model: "claude-3-haiku-20240307",
+      max_tokens: 1024,
+      messages: [
+        {
+          role: "user",
+          content: `Analyze the following code diffs and provide code review comments: ${diffs}`
+        }
+      ]
+    }, {
+      headers: {
+        'x-api-key': anthropicApiKey,
+        'anthropic-version': '2023-06-01',
+        'Content-Type': 'application/json',
       }
-    ]
-  }, {
-    headers: {
-      'x-api-key': anthropicApiKey,
-      'anthropic-version': '2023-06-01',
-      'Content-Type': 'application/json',
+    });
+
+    if (!response.data || !response.data.content) {
+      throw new Error('Invalid response from Claude API');
     }
-  });
 
-  if (!response.data || !response.data.content) {
-    throw new Error('Invalid response from Claude API');
+    console.log(`Analysis result from Claude:\n${JSON.stringify(response.data, null, 2)}`);
+
+    return response.data.content[0].text;
+  } catch (error) {
+    console.error('Error analyzing code with Claude:', error);
+    throw error;
   }
-
-  console.log(`Analysis result from Claude:\n${JSON.stringify(response.data, null, 2)}`);
-
-  return response.data.content[0].text;
 }
 
 async function postReviewComments(comments) {
-  const [owner, repo] = process.env.GITHUB_REPOSITORY.split('/');
-  const sha = process.env.GITHUB_SHA;
-
   console.log(`Posting review comments to ${owner}/${repo} commit ${sha}`);
 
-  await octokit.repos.createCommitComment({
-    owner,
-    repo,
-    commit_sha: sha,
-    body: comments
-  });
+  try {
+    await octokit.repos.createCommitComment({
+      owner,
+      repo,
+      commit_sha: sha,
+      body: comments
+    });
 
-  console.log("Review comments posted successfully");
+    console.log("Review comments posted successfully");
+  } catch (error) {
+    console.error('Error posting review comments:', error);
+    throw error;
+  }
 }
 
 async function main() {
