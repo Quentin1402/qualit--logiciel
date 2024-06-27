@@ -36,6 +36,8 @@ async function checkAuthentication() {
 
 checkAuthentication();
 
+/*
+
 async function getLastCommitDiff() {
   console.log(`Fetching commits for ${owner}/${repo} branch ${branch}`);
 
@@ -137,4 +139,4 @@ async function main() {
   }
 }
 
-main();
+main();*/
